@@ -13,7 +13,7 @@ class SearchBarWidget extends StatelessWidget {
       onChanged: onChanged,
       decoration: InputDecoration(
         hintText: 'Suchwort...',
-        prefixIcon: Icon(
+         prefixIcon: Icon(
           Icons.search,
           color: Colors.black54,
           size: 24,
