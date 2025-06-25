@@ -79,18 +79,62 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Column(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Icon(
-                                    Icons.book_outlined,
-                                    size: 64,
-                                    color: Colors.grey[400],
+                                  Container(
+                                    width: 90,
+                                    height: 90,
+                                    decoration: BoxDecoration(
+                                      color: Colors.amber[50],
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.amber.withOpacity(0.15),
+                                          blurRadius: 16,
+                                          offset: const Offset(0, 6),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Icon(
+                                      Icons.menu_book_rounded,
+                                      size: 54,
+                                      color: Colors.amber[800],
+                                    ),
                                   ),
-                                  const SizedBox(height: 16),
+                                  const SizedBox(height: 18),
                                   Text(
-                                    'Nenhuma palavra cadastrada ainda.',
+                                    'Noch keine Wörter gefunden!',
+                                    style: TextStyle(
+                                      color: Colors.grey[700],
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Füge das erste Wort hinzu und beginne dein Wörterbuch!',
+                                    textAlign: TextAlign.center,
                                     style: TextStyle(
                                       color: Colors.grey[600],
-                                      fontSize: 16,
+                                      fontSize: 15,
                                     ),
+                                  ),
+                                  const SizedBox(height: 22),
+                                  ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.red[700],
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      elevation: 2,
+                                    ),
+                                    icon: const Icon(Icons.add),
+                                    label: const Text('Wort hinzufügen'),
+                                    onPressed: () async {
+                                      await Navigator.of(context).push(
+                                        MaterialPageRoute(builder: (_) => const AddWordScreen()),
+                                      );
+                                    },
                                   ),
                                 ],
                               ),
