@@ -177,14 +177,33 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const AddWordScreen()),
-          );
-        },
-        backgroundColor: Colors.red[700],
-        child: const Icon(Icons.add, color: Colors.white),
+      floatingActionButton: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0.8, end: 1.0),
+        duration: const Duration(milliseconds: 500),
+        curve: Curves.easeOutBack,
+        builder: (context, scale, child) => Transform.scale(
+          scale: scale,
+          child: child,
+        ),
+        child: Tooltip(
+          message: 'Wort hinzufügen',
+          preferBelow: false,
+          child: FloatingActionButton(
+            onPressed: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AddWordScreen()),
+              );
+            },
+            backgroundColor: Colors.red[700],
+            foregroundColor: Colors.white,
+            elevation: 6,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            splashColor: const Color(0xFFFFD700),
+            child: const Icon(Icons.menu_book_rounded, size: 28),
+          ),
+        ),
       ),
     );
   }
