@@ -5,6 +5,7 @@ import '../widgets/word_tile.dart';
 import '../widgets/search_bar.dart';
 import '../widgets/custom_title.dart';
 import 'add_word_screen.dart';
+import 'flashcards_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

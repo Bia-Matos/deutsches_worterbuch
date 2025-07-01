@@ -1,85 +1,117 @@
 import 'package:flutter/material.dart';
 import '../models/word.dart';
 
-class WordTile extends StatelessWidget {
+class WordTile extends StatefulWidget {
   final Word word;
   final VoidCallback? onDelete;
 
   const WordTile({super.key, required this.word, this.onDelete});
 
   @override
+  State<WordTile> createState() => _WordTileState();
+}
+
+class _WordTileState extends State<WordTile> with SingleTickerProviderStateMixin {
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
-    return Card(
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      curve: Curves.easeInOut,
       margin: const EdgeInsets.symmetric(vertical: 6),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
+      decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.white,
-              Colors.grey[50]!,
-            ],
-          ),
-          border: Border.all(
-            color: Color(0xFFFFD700).withOpacity(0.3),
-            width: 1,
-          ),
+        border: Border.all(
+          color: const Color(0xFFFFD700).withOpacity(0.5), // amarelo
+          width: 1.5,
         ),
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          title: Text(
-            word.german,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-              color: Colors.black87,
-            ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 4),
-              Text(
-                word.portuguese,
-                style: TextStyle(
-                  color: Colors.grey[700],
-                  fontSize: 14,
-                ),
-              ),
-              if (word.example != null && word.example!.isNotEmpty)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8.0),
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Colors.blue[50],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.blue[100]!),
-                    ),
-                    child: Text(
-                      'Exemplo: ${word.example}',
-                      style: TextStyle(
-                        fontStyle: FontStyle.italic,
-                        color: Colors.blue[800],
-                        fontSize: 13,
+        ],
+        color: Colors.white,
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => setState(() => _expanded = !_expanded),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        widget.word.german,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 17,
+                          color: Colors.black,
+                        ),
                       ),
                     ),
-                  ),
+                    AnimatedRotation(
+                      turns: _expanded ? 0.5 : 0.0,
+                      duration: const Duration(milliseconds: 250),
+                      child: Icon(
+                        Icons.expand_more,
+                        color: Colors.black,
+                        size: 26,
+                      ),
+                    ),
+                  ],
                 ),
-            ],
+                if (_expanded) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    widget.word.portuguese,
+                    style: const TextStyle(
+                      color: Colors.red,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  if (widget.word.example != null && widget.word.example!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10.0),
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF8E1), // amarelo bem claro
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: const Color(0xFFFFD700)),
+                        ),
+                        child: Text(
+                          'Exemplo: ${widget.word.example}',
+                          style: const TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.black87,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (widget.onDelete != null)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: IconButton(
+                        icon: Icon(Icons.delete_outline, color: Colors.red[700]),
+                        onPressed: widget.onDelete,
+                        tooltip: 'Deletar',
+                      ),
+                    ),
+                ],
+              ],
+            ),
           ),
-          trailing: onDelete != null
-              ? IconButton(
-                  icon: Icon(Icons.delete_outline, color: Colors.red[400]),
-                  onPressed: onDelete,
-                )
-              : null,
         ),
       ),
     );

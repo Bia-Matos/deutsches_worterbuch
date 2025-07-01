@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/word.dart';
 import '../services/firestore_service.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:file_picker/file_picker.dart';
 
 class AddWordScreen extends StatefulWidget {
   const AddWordScreen({super.key});
@@ -14,6 +16,9 @@ class _AddWordScreenState extends State<AddWordScreen> {
   final _germanController = TextEditingController();
   final _portugueseController = TextEditingController();
   final _exampleController = TextEditingController();
+  final _imageUrlController = TextEditingController();
+  String? _uploadedImageUrl;
+  bool _uploadingImage = false;
   bool _isLoading = false;
 
   @override
@@ -21,6 +26,7 @@ class _AddWordScreenState extends State<AddWordScreen> {
     _germanController.dispose();
     _portugueseController.dispose();
     _exampleController.dispose();
+    _imageUrlController.dispose();
     super.dispose();
   }
 
@@ -32,10 +38,28 @@ class _AddWordScreenState extends State<AddWordScreen> {
       german: _germanController.text.trim(),
       portuguese: _portugueseController.text.trim(),
       example: _exampleController.text.trim(),
+      imageUrl: _imageUrlController.text.trim().isEmpty ? null : _imageUrlController.text.trim(),
     );
     await FirestoreService().addWord(word);
     setState(() => _isLoading = false);
     if (mounted) Navigator.of(context).pop();
+  }
+
+  Future<void> _pickAndUploadImage() async {
+    setState(() => _uploadingImage = true);
+    final result = await FilePicker.platform.pickFiles(type: FileType.image);
+    if (result != null && result.files.single.bytes != null) {
+      final fileBytes = result.files.single.bytes!;
+      final fileName = DateTime.now().millisecondsSinceEpoch.toString();
+      final ref = FirebaseStorage.instance.ref().child('word_images/$fileName');
+      final uploadTask = await ref.putData(fileBytes);
+      final url = await uploadTask.ref.getDownloadURL();
+      setState(() {
+        _uploadedImageUrl = url;
+        _imageUrlController.text = url;
+      });
+    }
+    setState(() => _uploadingImage = false);
   }
 
   @override
@@ -121,6 +145,52 @@ class _AddWordScreenState extends State<AddWordScreen> {
                         minLines: 1,
                         maxLines: 3,
                       ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              controller: _imageUrlController,
+                              decoration: InputDecoration(
+                                labelText: 'Bild-URL (optional)',
+                                hintText: 'https://...',
+                                prefixIcon: Icon(Icons.image, color: Colors.amber[800]),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                              ),
+                              keyboardType: TextInputType.url,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.black,
+                              foregroundColor: const Color(0xFFFFD700),
+                              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 10),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            onPressed: _uploadingImage ? null : _pickAndUploadImage,
+                            icon: _uploadingImage
+                                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                                : const Icon(Icons.upload),
+                            label: const Text('Selecionar'),
+                          ),
+                        ],
+                      ),
+                      if (_uploadedImageUrl != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10.0),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.network(
+                              _uploadedImageUrl!,
+                              height: 120,
+                              width: 180,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
                       const SizedBox(height: 24),
                       Row(
                         children: [
