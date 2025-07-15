@@ -8,6 +8,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'firebase_options.dart';
 import 'services/firestore_service.dart';
 import 'services/activity_service.dart';
+import 'services/audio_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +32,9 @@ Future<void> _preloadData() async {
     
     // Pre-carrega estatísticas de atividade
     await ActivityService().getActiveDays();
+    
+    // Inicializa serviço de áudio
+    await AudioService().initialize();
   } catch (e) {
     print('Erro ao pre-carregar dados: $e');
   }
@@ -121,6 +125,7 @@ class _MainTabScreenState extends State<MainTabScreen> with TickerProviderStateM
     // Limpa recursos dos serviços
     FirestoreService().dispose();
     ActivityService().dispose();
+    AudioService().dispose();
     super.dispose();
   }
 

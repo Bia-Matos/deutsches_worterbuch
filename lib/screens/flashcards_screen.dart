@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/firestore_service.dart';
 import '../models/word.dart';
 import '../widgets/custom_title.dart';
+import '../widgets/audio_button.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../services/activity_service.dart';
 
@@ -16,9 +17,6 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> with TickerProvider
   int _currentIndex = 0;
   bool _showBack = false;
   late AnimationController _flipController;
-  late AnimationController _slideController;
-  late Animation<double> _flipAnimation;
-  late Animation<Offset> _slideAnimation;
   final ActivityService _activityService = ActivityService();
   
   // Cache local para palavras
@@ -34,23 +32,6 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> with TickerProvider
       duration: const Duration(milliseconds: 600),
       vsync: this,
     );
-    _flipAnimation = Tween<double>(begin: 0, end: 1).animate(CurvedAnimation(
-      parent: _flipController,
-      curve: Curves.easeInOut,
-    ));
-    
-    // Controlador para slide do card
-    _slideController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _slideAnimation = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(1.5, 0),
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: Curves.easeInOut,
-    ));
     
     _loadWords();
     _activityService.recordFlashcardActivity();
@@ -75,7 +56,6 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> with TickerProvider
   @override
   void dispose() {
     _flipController.dispose();
-    _slideController.dispose();
     super.dispose();
   }
 
@@ -92,27 +72,21 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> with TickerProvider
 
   void _nextCard() {
     if (_currentIndex < _words.length - 1) {
-      _slideController.forward().then((_) {
-        setState(() {
-          _currentIndex++;
-          _showBack = false;
-        });
-        _flipController.reset();
-        _slideController.reset();
+      setState(() {
+        _currentIndex++;
+        _showBack = false;
       });
+      _flipController.reset();
     }
   }
 
   void _previousCard() {
     if (_currentIndex > 0) {
-      _slideController.forward().then((_) {
-        setState(() {
-          _currentIndex--;
-          _showBack = false;
-        });
-        _flipController.reset();
-        _slideController.reset();
+      setState(() {
+        _currentIndex--;
+        _showBack = false;
       });
+      _flipController.reset();
     }
   }
 
@@ -133,8 +107,7 @@ class _FlashcardsScreenState extends State<FlashcardsScreen> with TickerProvider
                         currentIndex: _currentIndex,
                         totalWords: _words.length,
                         showBack: _showBack,
-                        flipAnimation: _flipAnimation,
-                        slideAnimation: _slideAnimation,
+                        flipController: _flipController,
                         onFlip: _flipCard,
                         onNext: _nextCard,
                         onPrevious: _previousCard,
@@ -152,8 +125,7 @@ class _FlashcardContent extends StatelessWidget {
   final int currentIndex;
   final int totalWords;
   final bool showBack;
-  final Animation<double> flipAnimation;
-  final Animation<Offset> slideAnimation;
+  final AnimationController flipController;
   final VoidCallback onFlip;
   final VoidCallback onNext;
   final VoidCallback onPrevious;
@@ -163,8 +135,7 @@ class _FlashcardContent extends StatelessWidget {
     required this.currentIndex,
     required this.totalWords,
     required this.showBack,
-    required this.flipAnimation,
-    required this.slideAnimation,
+    required this.flipController,
     required this.onFlip,
     required this.onNext,
     required this.onPrevious,
@@ -189,36 +160,23 @@ class _FlashcardContent extends StatelessWidget {
             child: Center(
               child: GestureDetector(
                 onTap: onFlip,
-                onHorizontalDragEnd: (details) {
-                  // Detecta swipe horizontal mais específico para evitar conflito com PageView
-                  if (details.primaryVelocity! > 300) {
-                    // Swipe rápido para direita - próximo card
-                    onNext();
-                  } else if (details.primaryVelocity! < -300) {
-                    // Swipe rápido para esquerda - card anterior
-                    onPrevious();
-                  }
-                },
-                child: SlideTransition(
-                  position: slideAnimation,
-                  child: AnimatedBuilder(
-                    animation: flipAnimation,
-                    builder: (context, child) {
-                      final isFront = flipAnimation.value < 0.5;
-                      return AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 300),
-                        child: isFront
-                            ? _FlashcardFront(
-                                key: const ValueKey('front'),
-                                word: word,
-                              )
-                            : _FlashcardBack(
-                                key: const ValueKey('back'),
-                                word: word,
-                              ),
-                      );
-                    },
-                  ),
+                child: AnimatedBuilder(
+                  animation: flipController,
+                  builder: (context, child) {
+                    final isFront = flipController.value < 0.5;
+                    return AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: isFront
+                          ? _FlashcardFront(
+                              key: const ValueKey('front'),
+                              word: word,
+                            )
+                          : _FlashcardBack(
+                              key: const ValueKey('back'),
+                              word: word,
+                            ),
+                    );
+                  },
                 ),
               ),
             ),
@@ -226,8 +184,13 @@ class _FlashcardContent extends StatelessWidget {
           
           const SizedBox(height: 30),
           
-          // Instruções de uso
-          _SwipeInstructions(),
+          // Botões de navegação
+          _NavigationButtons(
+            onPrevious: onPrevious,
+            onNext: onNext,
+            currentIndex: currentIndex,
+            totalWords: totalWords,
+          ),
           
           const SizedBox(height: 20),
         ],
@@ -399,50 +362,20 @@ class _NavigationButton extends StatelessWidget {
           children: [
             Icon(
               icon,
-              size: 18,
               color: isEnabled ? Colors.white : Colors.grey[500],
+              size: 20,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: 8),
             Text(
               label,
               style: GoogleFonts.lato(
-                fontSize: 12,
+                fontSize: 14,
                 fontWeight: FontWeight.w600,
                 color: isEnabled ? Colors.white : Colors.grey[500],
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// Instruções de swipe
-class _SwipeInstructions extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: BoxDecoration(
-        color: Colors.blue[50],
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.blue[100]!),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.touch_app_rounded, color: Colors.blue[600], size: 20),
-          const SizedBox(width: 8),
-          Text(
-            'Toque para virar • Arraste rápido para navegar',
-            style: GoogleFonts.lato(
-              fontSize: 14,
-              color: Colors.blue[700],
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -730,6 +663,15 @@ class _FlashcardBack extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 
+                // Botão de áudio para pronúncia
+                const SizedBox(height: 16),
+                AudioButton(
+                  text: word.german,
+                  size: 28,
+                  color: Colors.white,
+                  showLabel: true,
+                ),
+                
                 // Artigo (se disponível)
                 if (word.article != null) ...[
                   const SizedBox(height: 16),
@@ -777,7 +719,7 @@ class _FlashcardBack extends StatelessWidget {
                 
                 const SizedBox(height: 24),
                 
-                // Indicador para arrastar
+                // Indicador para virar
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   decoration: BoxDecoration(
@@ -787,10 +729,10 @@ class _FlashcardBack extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.swipe_rounded, size: 16, color: Colors.white.withOpacity(0.8)),
+                      Icon(Icons.touch_app_rounded, size: 16, color: Colors.white.withOpacity(0.8)),
                       const SizedBox(width: 6),
                       Text(
-                        'Arraste para navegar',
+                        'Toque para voltar',
                         style: GoogleFonts.lato(
                           fontSize: 12,
                           color: Colors.white.withOpacity(0.8),

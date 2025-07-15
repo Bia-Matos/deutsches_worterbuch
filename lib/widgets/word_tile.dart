@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/word.dart';
+import 'audio_button.dart';
 
 class WordTile extends StatefulWidget {
   final Word word;
@@ -92,6 +93,12 @@ class _WordTileState extends State<WordTile> with AutomaticKeepAliveClientMixin 
                   Row(
                     children: [
                       Expanded(child: _germanText),
+                      AudioButton(
+                        text: widget.word.german,
+                        size: 20,
+                        color: Colors.blue[600],
+                      ),
+                      const SizedBox(width: 8),
                       _ExpandIcon(expanded: _expanded),
                     ],
                   ),

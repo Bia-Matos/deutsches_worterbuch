@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../services/firestore_service.dart';
 import '../models/word.dart';
 import '../widgets/custom_title.dart';
+import '../widgets/audio_button.dart';
 import '../services/activity_service.dart';
 
 class ArticlesTrainingScreen extends StatefulWidget {
@@ -259,14 +260,25 @@ class _ArticlesTrainingScreenState extends State<ArticlesTrainingScreen> {
                   const SizedBox(height: 24),
                   
                   // Palavra
-                  Text(
-                    currentWord.german,
-                    style: GoogleFonts.lato(
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                    textAlign: TextAlign.center,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        currentWord.german,
+                        style: GoogleFonts.lato(
+                          fontSize: 36,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(width: 12),
+                      AudioButton(
+                        text: currentWord.german,
+                        size: 32,
+                        color: Colors.blue[600],
+                      ),
+                    ],
                   ),
                   
                   const SizedBox(height: 32),
