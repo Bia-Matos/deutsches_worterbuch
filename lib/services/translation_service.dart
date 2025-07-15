@@ -2,38 +2,34 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class TranslationService {
-  // LibreTranslate - Totalmente gratuito, sem chave necessária
-  static const String _baseUrl = 'https://libretranslate.com/translate';
+  // MyMemory API - Totalmente gratuito, sem chave necessária
+  static const String _baseUrl = 'https://api.mymemory.translated.net/get';
   
   /// Traduz texto do português para alemão
   static Future<String?> translateToGerman(String text) async {
     if (text.trim().isEmpty) return null;
     
     try {
-      final response = await http.post(
-        Uri.parse(_baseUrl),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'q': text,
-          'source': 'pt',
-          'target': 'de',
-          'format': 'text'
-        }),
+      final response = await http.get(
+        Uri.parse('$_baseUrl?q=${Uri.encodeComponent(text)}&langpair=pt|de'),
       );
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['translatedText'] as String;
+        final translatedText = data['responseData']['translatedText'] as String;
+        
+        if (translatedText.isNotEmpty && translatedText != text) {
+          return translatedText;
+        } else {
+          // Se a tradução falhou, usa fallback
+          return _getTestTranslation(text, 'pt', 'de');
+        }
       } else {
         print('Erro na tradução: ${response.statusCode} - ${response.body}');
-        // Fallback para modo de teste se a API falhar
         return _getTestTranslation(text, 'pt', 'de');
       }
     } catch (e) {
       print('Erro ao traduzir: $e');
-      // Fallback para modo de teste se a API falhar
       return _getTestTranslation(text, 'pt', 'de');
     }
   }
@@ -43,30 +39,26 @@ class TranslationService {
     if (text.trim().isEmpty) return null;
     
     try {
-      final response = await http.post(
-        Uri.parse(_baseUrl),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'q': text,
-          'source': 'de',
-          'target': 'pt',
-          'format': 'text'
-        }),
+      final response = await http.get(
+        Uri.parse('$_baseUrl?q=${Uri.encodeComponent(text)}&langpair=de|pt'),
       );
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        return data['translatedText'] as String;
+        final translatedText = data['responseData']['translatedText'] as String;
+        
+        if (translatedText.isNotEmpty && translatedText != text) {
+          return translatedText;
+        } else {
+          // Se a tradução falhou, usa fallback
+          return _getTestTranslation(text, 'de', 'pt');
+        }
       } else {
         print('Erro na tradução: ${response.statusCode} - ${response.body}');
-        // Fallback para modo de teste se a API falhar
         return _getTestTranslation(text, 'de', 'pt');
       }
     } catch (e) {
       print('Erro ao traduzir: $e');
-      // Fallback para modo de teste se a API falhar
       return _getTestTranslation(text, 'de', 'pt');
     }
   }
@@ -78,11 +70,13 @@ class TranslationService {
     // Traduções de teste português → alemão
     if (from == 'pt' && to == 'de') {
       final translations = {
+        'oi': 'Hallo',
         'olá': 'Hallo',
         'bom dia': 'Guten Morgen',
         'boa tarde': 'Guten Tag',
         'boa noite': 'Gute Nacht',
         'obrigado': 'Danke',
+        'obrigada': 'Danke',
         'por favor': 'Bitte',
         'sim': 'Ja',
         'não': 'Nein',
@@ -98,6 +92,18 @@ class TranslationService {
         'eu estou bem': 'Mir geht es gut',
         'qual é o seu nome?': 'Wie heißt du?',
         'meu nome é': 'Mein Name ist',
+        'tchau': 'Tschüss',
+        'adeus': 'Auf Wiedersehen',
+        'bem-vindo': 'Willkommen',
+        'feliz aniversário': 'Alles Gute zum Geburtstag',
+        'parabéns': 'Herzlichen Glückwunsch',
+        'desculpe': 'Entschuldigung',
+        'com licença': 'Entschuldigung',
+        'você fala alemão?': 'Sprichst du Deutsch?',
+        'eu não entendo': 'Ich verstehe nicht',
+        'pode repetir?': 'Kannst du das wiederholen?',
+        'mais devagar': 'Langsamer',
+        'obrigado pela ajuda': 'Danke für die Hilfe',
       };
       
       return translations[lowerText] ?? 'Tradução não disponível';
@@ -126,6 +132,17 @@ class TranslationService {
         'mir geht es gut': 'Eu estou bem',
         'wie heißt du?': 'Qual é o seu nome?',
         'mein name ist': 'Meu nome é',
+        'tschüss': 'Tchau',
+        'auf wiedersehen': 'Adeus',
+        'willkommen': 'Bem-vindo',
+        'alles gute zum geburtstag': 'Feliz aniversário',
+        'herzlichen glückwunsch': 'Parabéns',
+        'entschuldigung': 'Desculpe',
+        'sprichst du deutsch?': 'Você fala alemão?',
+        'ich verstehe nicht': 'Eu não entendo',
+        'kannst du das wiederholen?': 'Pode repetir?',
+        'langsamer': 'Mais devagar',
+        'danke für die hilfe': 'Obrigado pela ajuda',
       };
       
       return translations[lowerText] ?? 'Tradução não disponível';
