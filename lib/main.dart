@@ -3,15 +3,37 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'screens/home_screen.dart';
 import 'screens/flashcards_screen.dart';
+import 'screens/articles_training_screen.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'firebase_options.dart';
+import 'services/firestore_service.dart';
+import 'services/activity_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Inicializa Firebase
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  
+  // Pre-carrega dados para melhor performance
+  await _preloadData();
+  
   runApp(const MyApp());
+}
+
+// Pre-carrega dados críticos para melhor performance inicial
+Future<void> _preloadData() async {
+  try {
+    // Pre-carrega palavras no cache
+    await FirestoreService().preloadData();
+    
+    // Pre-carrega estatísticas de atividade
+    await ActivityService().getActiveDays();
+  } catch (e) {
+    print('Erro ao pre-carregar dados: $e');
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -48,6 +70,17 @@ class MyApp extends StatelessWidget {
             ),
           ),
           scaffoldBackgroundColor: Colors.white,
+          // Otimizações de performance
+          useMaterial3: true,
+          pageTransitionsTheme: const PageTransitionsTheme(
+            builders: {
+              TargetPlatform.android: CupertinoPageTransitionsBuilder(),
+              TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+              TargetPlatform.windows: FadeUpwardsPageTransitionsBuilder(),
+              TargetPlatform.macOS: CupertinoPageTransitionsBuilder(),
+              TargetPlatform.linux: FadeUpwardsPageTransitionsBuilder(),
+            },
+          ),
         ),
         home: const MainTabScreen(),
       ),
@@ -62,34 +95,86 @@ class MainTabScreen extends StatefulWidget {
   State<MainTabScreen> createState() => _MainTabScreenState();
 }
 
-class _MainTabScreenState extends State<MainTabScreen> {
+class _MainTabScreenState extends State<MainTabScreen> with TickerProviderStateMixin {
   int _selectedIndex = 0;
+  late PageController _pageController;
 
-  final List<Widget> _screens = [
-    HomeScreen(),
-    FlashcardsScreen(),
-  ];
+  // Cache das telas para evitar reconstrução
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+    
+    // Inicializa as telas uma única vez
+    _screens = [
+      const HomeScreen(),
+      const FlashcardsScreen(),
+      const ArticlesTrainingScreen(),
+    ];
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    // Limpa recursos dos serviços
+    FirestoreService().dispose();
+    ActivityService().dispose();
+    super.dispose();
+  }
+
+  void _onTabTapped(int index) {
+    setState(() => _selectedIndex = index);
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 200), // Animação mais rápida
+      curve: Curves.easeOut,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _screens[_selectedIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: (index) => setState(() => _selectedIndex = index),
-        selectedItemColor: Colors.black,
-        unselectedItemColor: Colors.grey,
-        backgroundColor: Colors.white,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.menu_book_rounded),
-            label: 'Dicionário',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.style_rounded),
-            label: 'Flashcards',
-          ),
-        ],
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: (index) => setState(() => _selectedIndex = index),
+        physics: const NeverScrollableScrollPhysics(), // Desabilita swipe para evitar conflitos
+        children: _screens,
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _selectedIndex,
+          onTap: _onTabTapped,
+          selectedItemColor: Colors.black,
+          unselectedItemColor: Colors.grey,
+          backgroundColor: Colors.white,
+          elevation: 0,
+          items: const [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.menu_book_rounded),
+              label: 'Dicionário',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.style_rounded),
+              label: 'Flashcards',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.school_rounded),
+              label: 'Artigos',
+            ),
+          ],
+        ),
       ),
     );
   }

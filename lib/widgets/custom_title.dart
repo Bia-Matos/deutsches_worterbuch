@@ -56,29 +56,58 @@ class CustomTitle extends StatelessWidget {
           
           const Spacer(),
           
-          // Avatar/inicial do usuário
+          // Avatar da usuária - design mais sutil
           Container(
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: Colors.black,
-              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.blue[100]!,
+                  Colors.blue[200]!,
+                ],
+              ),
+              borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
+                  color: Colors.blue.withOpacity(0.15),
+                  blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
               ],
             ),
-            child: Center(
-              child: Text(
-                'B',
-                style: GoogleFonts.lato(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: const Color(0xFFFFD700),
-                ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.asset(
+                'assets/images/profile.jpg',
+                width: 36,
+                height: 36,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  // Fallback mais sutil com ícone de pessoa
+                  return Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.blue[100]!,
+                          Colors.blue[200]!,
+                        ],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.person_rounded,
+                      size: 20,
+                      color: Colors.blue[600],
+                    ),
+                  );
+                },
               ),
             ),
           ),
