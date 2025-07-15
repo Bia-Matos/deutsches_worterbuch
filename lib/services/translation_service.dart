@@ -1,22 +1,17 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../config/api_config.dart';
 
 class TranslationService {
-  static const String _baseUrl = 'https://translation.googleapis.com/language/translate/v2';
+  // LibreTranslate - Totalmente gratuito, sem chave necessária
+  static const String _baseUrl = 'https://libretranslate.com/translate';
   
   /// Traduz texto do português para alemão
   static Future<String?> translateToGerman(String text) async {
     if (text.trim().isEmpty) return null;
     
-    // Modo de teste para desenvolvimento
-    if (ApiConfig.useTestMode) {
-      return _getTestTranslation(text, 'pt', 'de');
-    }
-    
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl?key=${ApiConfig.googleTranslateApiKey}'),
+        Uri.parse(_baseUrl),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -30,33 +25,26 @@ class TranslationService {
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final translations = data['data']['translations'] as List;
-        
-        if (translations.isNotEmpty) {
-          return translations.first['translatedText'] as String;
-        }
+        return data['translatedText'] as String;
       } else {
         print('Erro na tradução: ${response.statusCode} - ${response.body}');
+        // Fallback para modo de teste se a API falhar
+        return _getTestTranslation(text, 'pt', 'de');
       }
     } catch (e) {
       print('Erro ao traduzir: $e');
+      // Fallback para modo de teste se a API falhar
+      return _getTestTranslation(text, 'pt', 'de');
     }
-    
-    return null;
   }
   
   /// Traduz texto do alemão para português
   static Future<String?> translateToPortuguese(String text) async {
     if (text.trim().isEmpty) return null;
     
-    // Modo de teste para desenvolvimento
-    if (ApiConfig.useTestMode) {
-      return _getTestTranslation(text, 'de', 'pt');
-    }
-    
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl?key=${ApiConfig.googleTranslateApiKey}'),
+        Uri.parse(_baseUrl),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -70,26 +58,21 @@ class TranslationService {
       
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
-        final translations = data['data']['translations'] as List;
-        
-        if (translations.isNotEmpty) {
-          return translations.first['translatedText'] as String;
-        }
+        return data['translatedText'] as String;
       } else {
         print('Erro na tradução: ${response.statusCode} - ${response.body}');
+        // Fallback para modo de teste se a API falhar
+        return _getTestTranslation(text, 'de', 'pt');
       }
     } catch (e) {
       print('Erro ao traduzir: $e');
+      // Fallback para modo de teste se a API falhar
+      return _getTestTranslation(text, 'de', 'pt');
     }
-    
-    return null;
   }
   
-  /// Traduções de teste para desenvolvimento
+  /// Traduções de teste como fallback
   static String? _getTestTranslation(String text, String from, String to) {
-    // Simula um delay de rede
-    Future.delayed(const Duration(milliseconds: 500));
-    
     final lowerText = text.toLowerCase();
     
     // Traduções de teste português → alemão
@@ -117,7 +100,7 @@ class TranslationService {
         'meu nome é': 'Mein Name ist',
       };
       
-      return translations[lowerText] ?? 'Tradução não disponível em modo de teste';
+      return translations[lowerText] ?? 'Tradução não disponível';
     }
     
     // Traduções de teste alemão → português
@@ -145,9 +128,9 @@ class TranslationService {
         'mein name ist': 'Meu nome é',
       };
       
-      return translations[lowerText] ?? 'Tradução não disponível em modo de teste';
+      return translations[lowerText] ?? 'Tradução não disponível';
     }
     
-    return 'Tradução não disponível em modo de teste';
+    return 'Tradução não disponível';
   }
 } 

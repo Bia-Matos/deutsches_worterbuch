@@ -334,7 +334,7 @@ class _TranslationScreenState extends State<TranslationScreen> {
             borderRadius: BorderRadius.circular(16.r),
           ),
         ).copyWith(
-          backgroundColor: MaterialStateProperty.all(Colors.transparent),
+          backgroundColor: WidgetStateProperty.all(Colors.transparent),
         ),
       ),
     );
