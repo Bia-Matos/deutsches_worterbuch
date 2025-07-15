@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'screens/home_screen.dart';
 import 'screens/flashcards_screen.dart';
 import 'screens/articles_training_screen.dart';
+import 'screens/translation_screen.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'firebase_options.dart';
 import 'services/firestore_service.dart';
@@ -116,6 +117,7 @@ class _MainTabScreenState extends State<MainTabScreen> with TickerProviderStateM
       const HomeScreen(),
       const FlashcardsScreen(),
       const ArticlesTrainingScreen(),
+      const TranslationScreen(),
     ];
   }
 
@@ -177,6 +179,10 @@ class _MainTabScreenState extends State<MainTabScreen> with TickerProviderStateM
             BottomNavigationBarItem(
               icon: Icon(Icons.school_rounded),
               label: 'Artigos',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.translate_rounded),
+              label: 'Tradutor',
             ),
           ],
         ),
